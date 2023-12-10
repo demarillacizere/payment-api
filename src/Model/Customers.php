@@ -24,7 +24,7 @@ class Customers extends A_Model
 
     #[ORM\Column(name: 'is_active', type: 'boolean', nullable: false)]
     private bool $isActive;
-    #[ORM\OneToMany(mappedBy: "customer", targetEntity: Payments::class)]
+    #[ORM\OneToMany(mappedBy: "customer", targetEntity: Payments::class), ]
 
     public function __construct()
     {
@@ -66,13 +66,4 @@ class Customers extends A_Model
         $this->isActive = $isActive;
     }
 
-    public function getPayments(): ArrayCollection
-    {
-        return $this->payments;
-    }
-
-    public function setPayments(ArrayCollection $payments): void
-    {
-        $this->payments = $payments;
-    }
 }

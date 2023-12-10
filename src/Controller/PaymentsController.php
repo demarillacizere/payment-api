@@ -1,6 +1,4 @@
 <?php
-
-
 namespace PaymentApi\Controller;
 
 use Laminas\Diactoros\Response\JsonResponse;
@@ -14,7 +12,6 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use PaymentApi\Repository\CustomersRepository;
 use PaymentApi\Repository\MethodsRepository;
 use DateTime;
-use Slim\Psr7\Message;
 
 class PaymentsController extends A_Controller
 {
@@ -86,6 +83,59 @@ class PaymentsController extends A_Controller
             return new JsonResponse($context, 404);
         }
     }
+
+      /**
+     * @OA\Post(
+     *     path="/v1/payments",
+     *     description="Creates a payment",
+     *     @OA\RequestBody(
+     *          description="Input data format",
+     *          @OA\MediaType(
+     *              mediaType="json",
+     *              @OA\Schema(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="method_id",
+     *                      description="ID of paymnet method",
+     *                      type="integer",
+     *                  ),
+     *              ),
+     *              @OA\Schema(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="customer_id",
+     *                      description="ID of customer",
+     *                      type="integer",
+     *                  ),
+     *              ),
+     *              @OA\Schema(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="amount",
+     *                      description="Payment amount",
+     *                      type="float",
+     *                  ),
+     *              ),
+     *          ),
+     *      ),
+     *     @OA\Response(
+     *          response=200,
+     *          description="payment has been created successfully",
+     *      ),
+     *     @OA\Response(
+     *          response=400,
+     *          description="bad request",
+     *      ),
+     *      @OA\Response(
+     *            response=500,
+     *            description="Internal server error",
+     *        ),
+     *   ),
+     * )
+     * @param \Slim\Psr7\Request $request
+     * @param \Slim\Psr7\Response $response
+     * @return ResponseInterface
+     */
     public function createAction(Request $request, Response $response): ResponseInterface
     {
         $requestBody = json_decode($request->getBody()->getContents(), true);
@@ -144,76 +194,6 @@ class PaymentsController extends A_Controller
 
 
     /**
-     * @OA\Post(
-     *     path="/v1/payments",
-     *     description="Creates a payment",
-     *     @OA\RequestBody(
-     *          description="Input data format",
-     *          @OA\MediaType(
-     *              mediaType="multipart/form-data",
-     *              @OA\Schema(
-     *                  type="object",
-     *                  @OA\Property(
-     *                      property="method_id",
-     *                      description="ID of paymnet method",
-     *                      type="integer",
-     *                  ),
-     *              ),
-     *              @OA\Schema(
-     *                  type="object",
-     *                  @OA\Property(
-     *                      property="customer_id",
-     *                      description="ID of customer",
-     *                      type="integer",
-     *                  ),
-     *              ),
-     *              @OA\Schema(
-     *                  type="object",
-     *                  @OA\Property(
-     *                      property="order_id",
-     *                      description="ID of order",
-     *                      type="integer",
-     *                  ),
-     *              ),
-     *              @OA\Schema(
-     *                  type="object",
-     *                  @OA\Property(
-     *                      property="sum",
-     *                      description="Paymnet amount",
-     *                      type="float",
-     *                  ),
-     *              ),
-     *              @OA\Schema(
-     *                  type="object",
-     *                  @OA\Property(
-     *                      property="is_finalized",
-     *                      description="If paymnet is finalized",
-     *                      type="integer",
-     *                  ),
-     *              ),
-     *          ),
-     *      ),
-     *     @OA\Response(
-     *          response=200,
-     *          description="payment has been created successfully",
-     *      ),
-     *     @OA\Response(
-     *          response=400,
-     *          description="bad request",
-     *      ),
-     *      @OA\Response(
-     *            response=500,
-     *            description="Internal server error",
-     *        ),
-     *   ),
-     * )
-     * @param \Slim\Psr7\Request $request
-     * @param \Slim\Psr7\Response $response
-     * @return ResponseInterface
-     */
-
-
-    /**
      * @OA\Put(
      *     path="/v1/payments/{id}",
      *     description="update a single paymnet based on payment ID",
@@ -250,32 +230,16 @@ class PaymentsController extends A_Controller
      *               @OA\Schema(
      *                   type="object",
      *                   @OA\Property(
-     *                       property="order_id",
-     *                       description="ID of order",
-     *                       type="integer",
-     *                   ),
-     *               ),
-     *               @OA\Schema(
-     *                   type="object",
-     *                   @OA\Property(
-     *                       property="",
+     *                       property="amount",
      *                       description="Paymnet amount",
      *                       type="float",
-     *                   ),
-     *               ),
-     *               @OA\Schema(
-     *                   type="object",
-     *                   @OA\Property(
-     *                       property="is_finalized",
-     *                       description="If paymnet is finalized",
-     *                       type="integer",
      *                   ),
      *               ),
      *           ),
      *       ),
      * @OA\Response(
      *           response=200,
-     *           description="paymnet has been created successfully",
+     *           description="paymnet has been updated successfully",
      *       ),
      * @OA\Response(
      *           response=400,
@@ -314,9 +278,6 @@ class PaymentsController extends A_Controller
             $this->logger->info('No payments found', $context);
             return new JsonResponse($context, 404);
         }
-
-
-        //@TODO: check the relations OneToMany in Doctrine
         $this->model = $payment;
 
         $this->model->setMethodId((int) $methodId);

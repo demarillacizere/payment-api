@@ -11,8 +11,33 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
+/**
+ * @OA\Info(
+ *     title="Payment API",
+ *     version="1.0",
+ *     description="API for managing Customers and Payments.",
+ * )
+ */
+
+/**
+ * @OA\Server(
+ *     url="http://localhost:8000",
+ *     description="Payment API Server"
+ * )
+ */
+
+/**
+ * CustomersController
+ */
 final class CustomersController extends A_Controller
 {
+    /**
+     * Method __construct
+     *
+     * @param ContainerInterface $container [explicite description]
+     *
+     * @return void
+     */
     public function __construct(ContainerInterface $container)
     {
         parent::__construct($container);
@@ -50,7 +75,7 @@ final class CustomersController extends A_Controller
      *     @OA\RequestBody(
      *          description="Input data format",
      *          @OA\MediaType(
-     *              mediaType="multipart/form-data",
+     *              mediaType="json",
      *              @OA\Schema(
      *                  type="object",
      *                  @OA\Property(
@@ -179,7 +204,7 @@ final class CustomersController extends A_Controller
      *     @OA\RequestBody(
      *           description="Input data format",
      *           @OA\MediaType(
-     *               mediaType="multipart/form-data",
+     *               mediaType="json",
      *               @OA\Schema(
      *                   type="object",
      *                   @OA\Property(
@@ -221,8 +246,6 @@ final class CustomersController extends A_Controller
 {
     try {
         $requestBody = json_decode($request->getBody()->getContents(), true);
-
-        // Validate the required fields
         if (!isset($requestBody['name']) || !isset($requestBody['address'])) {
             $context = [
                 'type' => '/errors/missing_fields',
@@ -254,11 +277,8 @@ final class CustomersController extends A_Controller
         $this->model = $customer;
         $this->model->setName($name);
         $this->model->setAddress($address);
-
-        // Call the parent updateAction method
         return parent::updateAction($request, $response, $args);
     } catch (\Exception $e) {
-        // Handle other exceptions (500 Internal Server Error)
         $context = [
             'type' => '/errors/internal_server_error',
             'title' => 'Internal Server Error',

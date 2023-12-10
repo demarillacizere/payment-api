@@ -54,7 +54,7 @@ final class MethodsController extends A_Controller
      *     @OA\RequestBody(
      *          description="Input data format",
      *          @OA\MediaType(
-     *              mediaType="multipart/form-data",
+     *              mediaType="json",
      *              @OA\Schema(
      *                  type="object",
      *                  @OA\Property(
@@ -105,11 +105,8 @@ final class MethodsController extends A_Controller
             $this->model = new Methods();
             $this->model->setName($name);
             $this->model->setIsActive(true);
-    
-            // Call the parent createAction method
             return parent::createAction($request, $response);
         } catch (\Exception $e) {
-            // Handle other exceptions (500 Internal Server Error)
             $context = [
                 'type' => '/errors/internal_server_error',
                 'title' => 'Internal Server Error',
@@ -140,7 +137,7 @@ final class MethodsController extends A_Controller
      *     @OA\RequestBody(
      *           description="Input data format",
      *           @OA\MediaType(
-     *               mediaType="multipart/form-data",
+     *               mediaType="json",
      *               @OA\Schema(
      *                   type="object",
      *                   @OA\Property(
@@ -207,11 +204,8 @@ final class MethodsController extends A_Controller
     
             $this->model = $method;
             $method->setName($name);
-    
-            // Call the parent updateAction method
             return parent::updateAction($request, $response, $args);
         } catch (\Exception $e) {
-            // Handle other exceptions (500 Internal Server Error)
             $context = [
                 'type' => '/errors/internal_server_error',
                 'title' => 'Internal Server Error',

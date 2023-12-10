@@ -20,10 +20,11 @@ $app->get('/v1', function (Request $request, Response $response, $args) {
     echo "Welcome to the payment app";
 });
 
-$app->get('/v1/api-docs', function (Request $request, Response $response) {
-    include __DIR__ . '/swagger-ui/dist/index.html';
+$app->get('/api-docs', function (Request $request, Response $response) {
+    include __DIR__ . '/docs/index.php';
     return $response;
 });
+
 
 $app->get('/v1/token-generator', function (Request $request, Response $response) {
     exec('php ' . __DIR__ . '/../config/jwt-token.php', $output);
