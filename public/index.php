@@ -61,11 +61,11 @@ $app->group('/v1/payments', function (RouteCollectorProxy $group) {
 })->add($jwt);
 
 
-$displayErrors = $_ENV['APP_ENV'] != 'production';
-$displayErrors = true;
+// $displayErrors = $_ENV['APP_ENV'] != 'production';
+// $displayErrors = true;
 $customErrorHandler = new CustomErrorHandler($app);
 
-$errorMiddleware = $app->addErrorMiddleware($displayErrors, true, true);
+$errorMiddleware = $app->addErrorMiddleware(true, true, true);
 $errorMiddleware->setDefaultErrorHandler($customErrorHandler);
 
 $app->run();

@@ -44,18 +44,7 @@ final class MethodsController extends A_Controller
      */
     public function indexAction(Request $request, ResponseInterface $response): ResponseInterface
     {
-        $methods = $this->repository->findAll();
-        $methodsDetails = [];
-        foreach ($methods as $method) {
-            $methodDetails[] = [
-                'id' => $method->getId(),
-                'name' => $method->getName(),
-                'IsActive' => $method->isActive(), 
-            ];
-        }
-
-        // Return the array of customer details as JSON response
-        return new JsonResponse($methodDetails);
+        return parent::indexAction($request, $response);
     }
 
     /**
@@ -96,15 +85,42 @@ final class MethodsController extends A_Controller
      */
     public function createAction(Request $request, Response $response): ResponseInterface
     {
-        $requestBody = json_decode($request->getBody()->getContents(), true);
-        $name = filter_var($requestBody['name'], FILTER_SANITIZE_SPECIAL_CHARS);
-
-        $this->model = new Methods();
-        $this->model->setName($name);
-        $this->model->setIsActive(true);
-
-        return parent::createAction($request, $response);
+        try {
+            $requestBody = json_decode($request->getBody()->getContents(), true);
+    
+            // Validate the required fields
+            if (!isset($requestBody['name'])) {
+                $context = [
+                    'type' => '/errors/missing_fields',
+                    'title' => 'Missing required fields',
+                    'status' => 400,
+                    'detail' => 'The "name" field is required.'
+                ];
+                $this->logger->info('Missing required fields', $context);
+                return new JsonResponse($context, 400);
+            }
+    
+            $name = filter_var($requestBody['name'], FILTER_SANITIZE_SPECIAL_CHARS);
+    
+            $this->model = new Methods();
+            $this->model->setName($name);
+            $this->model->setIsActive(true);
+    
+            // Call the parent createAction method
+            return parent::createAction($request, $response);
+        } catch (\Exception $e) {
+            // Handle other exceptions (500 Internal Server Error)
+            $context = [
+                'type' => '/errors/internal_server_error',
+                'title' => 'Internal Server Error',
+                'status' => 500,
+                'detail' => $e->getMessage()
+            ];
+            $this->logger->error('Internal Server Error', $context);
+            return new JsonResponse($context, 500);
+        }
     }
+    
 
 
     /**
@@ -159,26 +175,54 @@ final class MethodsController extends A_Controller
      */
     public function updateAction(Request $request, Response $response, array $args): ResponseInterface
     {
-        $requestBody = json_decode($request->getBody()->getContents(), true);
-        $name = filter_var($requestBody['name'], FILTER_SANITIZE_SPECIAL_CHARS);
-
-        $method = $this->repository->findById($args['id']);
-        if (is_null($method)) {
+        try {
+            $requestBody = json_decode($request->getBody()->getContents(), true);
+    
+            // Validate the required fields
+            if (!isset($requestBody['name'])) {
+                $context = [
+                    'type' => '/errors/missing_fields',
+                    'title' => 'Missing required fields',
+                    'status' => 400,
+                    'detail' => 'The "name" field is required.'
+                ];
+                $this->logger->info('Missing required fields', $context);
+                return new JsonResponse($context, 400);
+            }
+    
+            $name = filter_var($requestBody['name'], FILTER_SANITIZE_SPECIAL_CHARS);
+    
+            $method = $this->repository->findById($args['id']);
+            if (is_null($method)) {
+                $context = [
+                    'type' => '/errors/no_methods_found_upon_update',
+                    'title' => 'List of methods',
+                    'status' => 404,
+                    'detail' => $args['id'],
+                    'instance' => '/v1/methods/{id}'
+                ];
+                $this->logger->info('No methods found', $context);
+                return new JsonResponse($context, 404);
+            }
+    
+            $this->model = $method;
+            $method->setName($name);
+    
+            // Call the parent updateAction method
+            return parent::updateAction($request, $response, $args);
+        } catch (\Exception $e) {
+            // Handle other exceptions (500 Internal Server Error)
             $context = [
-                'type' => '/errors/no_methods_found_upon_update',
-                'title' => 'List of methods',
-                'status' => 404,
-                'detail' => $args['id'],
-                'instance' => '/v1/methods/{id}'
+                'type' => '/errors/internal_server_error',
+                'title' => 'Internal Server Error',
+                'status' => 500,
+                'detail' => $e->getMessage()
             ];
-            $this->logger->info('No methods found', $context);
-            return new JsonResponse($context, 404);
+            $this->logger->error('Internal Server Error', $context);
+            return new JsonResponse($context, 500);
         }
-        $this->model = $method;
-        $method->setName($name);
-
-        return parent::updateAction($request, $response, $args);
     }
+    
 
     /**
      * @OA\Get(

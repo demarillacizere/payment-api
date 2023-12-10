@@ -39,17 +39,18 @@ final class CustomersController extends A_Controller
      */
     public function indexAction(Request $request, Response $response): ResponseInterface
     {
-        $customers = $this->repository->findAll();
-        $customerDetails = [];
-        foreach ($customers as $customer) {
-            $customerDetails[] = [
-                'id' => $customer->getId(),
-                'name' => $customer->getName(),
-                'address' => $customer->getAddress(),
-                'IsActive' => $customer->isActive(),
-            ];
-        }
-        return new JsonResponse($customerDetails);
+        // $customers = $this->repository->findAll();
+        // $customerDetails = [];
+        // foreach ($customers as $customer) {
+        //     $customerDetails[] = [
+        //         'id' => $customer->getId(),
+        //         'name' => $customer->getName(),
+        //         'address' => $customer->getAddress(),
+        //         'IsActive' => $customer->isActive(),
+        //     ];
+        // }
+        // return new JsonResponse($customerDetails);
+        return parent::indexAction($request, $response);
     }
 
 
@@ -96,17 +97,44 @@ final class CustomersController extends A_Controller
      */
     public function createAction(Request $request, Response $response): ResponseInterface
     {
-        $requestBody = json_decode($request->getBody()->getContents(), true);
-        $name = filter_var($requestBody['name'], FILTER_SANITIZE_SPECIAL_CHARS);
-        $address = filter_var($requestBody['address'], FILTER_SANITIZE_SPECIAL_CHARS);
-
-        $this->model = new Customers();
-        $this->model->setName($name);
-        $this->model->setAddress($address);
-        $this->model->setIsActive(true);
-
-        return parent::createAction($request, $response);
+        try {
+            $requestBody = json_decode($request->getBody()->getContents(), true);
+    
+            // Validate the required fields
+            if (!isset($requestBody['name']) || !isset($requestBody['address'])) {
+                $context = [
+                    'type' => '/errors/missing_fields',
+                    'title' => 'Missing required fields',
+                    'status' => 400,
+                    'detail' => 'The "name" and "address" fields are required.'
+                ];
+                $this->logger->info('Missing required fields', $context);
+                return new JsonResponse($context, 400);
+            }
+    
+            $name = filter_var($requestBody['name'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $address = filter_var($requestBody['address'], FILTER_SANITIZE_SPECIAL_CHARS);
+    
+            $this->model = new Customers();
+            $this->model->setName($name);
+            $this->model->setAddress($address);
+            $this->model->setIsActive(true);
+    
+            // Call the parent createAction method
+            return parent::createAction($request, $response);
+        } catch (\Exception $e) {
+            // Handle other exceptions (500 Internal Server Error)
+            $context = [
+                'type' => '/errors/internal_server_error',
+                'title' => 'Internal Server Error',
+                'status' => 500,
+                'detail' => $e->getMessage()
+            ];
+            $this->logger->error('Internal Server Error', $context);
+            return new JsonResponse($context, 500);
+        }
     }
+    
 
     /**
      * @OA\Delete(
@@ -201,8 +229,22 @@ final class CustomersController extends A_Controller
      * @return ResponseInterface
      */
     public function updateAction(Request $request, Response $response, array $args): ResponseInterface
-    {
+{
+    try {
         $requestBody = json_decode($request->getBody()->getContents(), true);
+
+        // Validate the required fields
+        if (!isset($requestBody['name']) || !isset($requestBody['address'])) {
+            $context = [
+                'type' => '/errors/missing_fields',
+                'title' => 'Missing required fields',
+                'status' => 400,
+                'detail' => 'The "name" and "address" fields are required.'
+            ];
+            $this->logger->info('Missing required fields', $context);
+            return new JsonResponse($context, 400);
+        }
+
         $name = filter_var($requestBody['name'], FILTER_SANITIZE_SPECIAL_CHARS);
         $address = filter_var($requestBody['address'], FILTER_SANITIZE_SPECIAL_CHARS);
 
@@ -219,12 +261,26 @@ final class CustomersController extends A_Controller
             $this->logger->info('No customers found', $context);
             return new JsonResponse($context, 404);
         }
+
         $this->model = $customer;
         $this->model->setName($name);
         $this->model->setAddress($address);
 
+        // Call the parent updateAction method
         return parent::updateAction($request, $response, $args);
+    } catch (\Exception $e) {
+        // Handle other exceptions (500 Internal Server Error)
+        $context = [
+            'type' => '/errors/internal_server_error',
+            'title' => 'Internal Server Error',
+            'status' => 500,
+            'detail' => $e->getMessage()
+        ];
+        $this->logger->error('Internal Server Error', $context);
+        return new JsonResponse($context, 500);
     }
+}
+
 
     /**
      * @OA\Get(

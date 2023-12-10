@@ -18,15 +18,18 @@ use Slim\Psr7\Message;
 
 class PaymentsController extends A_Controller
 {
-    private $paymentsRepository;
+
     private $customersRepository;
     private $methodsRepository;
-    public function __construct(ContainerInterface $container, PaymentsRepository $paymentsRepository, CustomersRepository $customerRepository, MethodsRepository $methodsRepository)
+    public function __construct(ContainerInterface $container)
     {
         parent::__construct($container);
-        $this->paymentsRepository = $paymentsRepository;
-        $this->customersRepository = $customerRepository;
-        $this->methodsRepository = $methodsRepository;
+        $this->customersRepository = $container->get(CustomersRepository::class);
+        $this->methodsRepository = $container->get(MethodsRepository::class);
+        $this->routeEnum = Routes::Payments;
+        $this->routeValue = Routes::Payments->value;
+        $this->repository = $container->get(PaymentsRepository::class);
+        
     }
 
     /**
@@ -47,58 +50,46 @@ class PaymentsController extends A_Controller
      */
     public function indexAction(Request $request, Response $response): ResponseInterface
     {
-        $payments = $this->paymentsRepository->findAll();
-
-        if (empty($payments)) {
-            $this->logger->info('No payment transaction found.', ['status_code' => 404]);
-            $data = ['message' => 'No payment transaction found'];
-            $statusCode = 404;
+        $records = $this->repository->findAll();
+        $responseData = [
+            'type' => '',
+            'title' => 'List of ' . $this->routeValue,
+            'instance' => '/v1/' . $this->routeValue,
+        ];
+    
+        if (count($records) > 0) {
+            $responseData['status'] = 200;
+            $responseData['detail'] = count($records);
+    
+            // Converting private properties to array using reflection
+            $data = array_map(function ($record) {
+                            $responseData[] = [
+                                'id' => $record->getId(),
+                                'customer_id' => $record->getCustomer()->getId(),
+                                'method_id' => $record->getPaymentMethod()->getId(),
+                                'amount' => $record->getAmount(),
+                                'payment_date' => $record->getPaymentDate()->format('Y-m-d H:i:s'),
+                            ];
+                            return $responseData;
+            }, $records);
+    
+            $responseData['data'] = $data;
+            $this->logger->info('Records found:', $responseData);
+            return new JsonResponse($responseData, 200);
         } else {
-            $responseData = [];
-            foreach ($payments as $payment) {
-                $responseData[] = [
-                    'id' => $payment->getId(),
-                    'customer_id' => $payment->getCustomer()->getId(),
-                    'method_id' => $payment->getPaymentMethod()->getId(),
-                    'amount' => $payment->getAmount(),
-                    'payment_date' => $payment->getPaymentDate()->format('Y-m-d H:i:s'),
-                ];
-            }
-
-            $this->logger->info('Payments transaction list retrieved.', ['status_code' => 200]);
-            $data = $responseData;
-            $statusCode = 200;
+            $context = [
+                'type' => '/errors/no_' . $this->routeValue . '_found',
+                'status' => 404,
+                'detail' => 'No records found',
+            ];
+            $this->logger->info('No ' . $this->routeValue . ' found', $context);
+            return new JsonResponse($context, 404);
         }
-
-        $response->getBody()->write(json_encode($data));
-
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus($statusCode);
     }
     public function createAction(Request $request, Response $response): ResponseInterface
     {
-        $parsedBody = $request->getParsedBody();
-        $contentType = $request->getHeaderLine('Content-Type');
-
-        if (empty($parsedBody)) {
-            $jsonBody = json_decode($request->getBody()->getContents(), true);
-            if (!empty($jsonBody)) {
-                $data = $jsonBody;
-            } else {
-                $context = [
-                    'type' => '/errors/invalid_data_upon_create',
-                    'title' => 'Create Payment',
-                    'status' => 400,
-                    'detail' => 'Invalid Variables',
-                    'instance' => '/v1/payments'
-                ];
-                $this->logger->info('Invalid Data', $context);
-                return new JsonResponse($context, 400);
-            }
-        } else {
-            $data = $parsedBody;
-        }
+        $requestBody = json_decode($request->getBody()->getContents(), true);
+        $data = $requestBody;
 
         if (!$data || empty($data['customer_id']) || empty($data['method_id']) || empty($data['amount']) || empty($data['payment_date'])) {
             
@@ -106,54 +97,49 @@ class PaymentsController extends A_Controller
                     'type' => '/errors/invalid_data_upon_create',
                     'title' => 'Create Payment',
                     'status' => 400,
-                    'detail' => 'Invalid Credentials',
+                    'detail' => 'Invalid Data | customer_id, method_id, amount and payment_date are required',
                     'instance' => '/v1/payments'
                 ];
                 $this->logger->info('Invalid Data', $context);
                 return new JsonResponse($context, 400);
-            // $this->logger->info('Invalid Data.', ['statusCode' => 400]);
-            // $response->getBody()->write(json_encode(['message' => 'Invalid data']));
-            // return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
+        $methodId = filter_var($data['method_id'], FILTER_SANITIZE_NUMBER_INT);
+        $customerId = filter_var($data['customer_id'], FILTER_SANITIZE_NUMBER_INT);
+        $amount = filter_var($data['amount'], FILTER_SANITIZE_NUMBER_FLOAT);
+        $paymentDate= filter_var($data['payment_date'], FILTER_SANITIZE_SPECIAL_CHARS);
 
-        $customer = $this->customersRepository->findById($data['customer_id']);
-        $method = $this->methodsRepository->findById($data['method_id']);
+        $customer = $this->customersRepository->findById($customerId);
+        $method = $this->methodsRepository->findById($methodId);
 
         if (!$customer) {
-            $this->logger->info('Invalid Customer ID.', ['statusCode' => 400]);
-            $response->getBody()->write(json_encode(['message' => 'Invalid customer ID']));
-            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+            $context = [
+                'type' => '/errors/invalid_data_upon_create',
+                'title' => 'Create Payment',
+                'status' => 404,
+                'detail' => 'Invalid customer_id',
+                'instance' => '/v1/payments'
+            ];
+            $this->logger->info('Customer ID not found', $context);
+            return new JsonResponse($context, 400);
         } else if (!$method) {
-            $this->logger->info('Invalid payment method ID.', ['statusCode' => 400]);
-            $response->getBody()->write(json_encode(['message' => 'Invalid payment method ID']));
-            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+            $context = [
+                'type' => '/errors/invalid_data_upon_create',
+                'title' => 'Create Payment',
+                'status' => 404,
+                'detail' => 'Invalid method_id',
+                'instance' => '/v1/payments'
+            ];
+            $this->logger->info('Method ID not found', $context);
+            return new JsonResponse($context, 400);
         }
+        
 
-        $payment = new Payments();
-        $payment->setCustomer($customer);
-        $payment->setPaymentMethod($method);
-        $payment->setAmount($data['amount']);
-        $payment->setPaymentDate(new \DateTime($data['payment_date']));
-
-        try {
-            $this->paymentsRepository->store($payment);
-
-            $this->logger->info('Payment transaction created.', ['payment_id' => $payment->getId()]);
-
-            $response->getBody()->write(json_encode(['message' => 'Payment transaction created successfully']));
-            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-                $context = [
-                    'type' => '/errors/no_customers_found_upon_update',
-                    'title' => 'List of customers',
-                    'status' => 404,
-                    'detail' => $e,
-                    'instance' => '/v1/customers/{id}'
-                ];
-                $this->logger->info('No customers found', $context);
-                return new JsonResponse($context, 500);
-            
-        }
+        $this->model = new Payments();
+        $this->model->setCustomer($customer);
+        $this->model->setPaymentMethod($method);
+        $this->model->setAmount($amount);
+        $this->model->setPaymentDate(new \DateTime($paymentDate));
+        return parent::createAction($request, $response);
     }
 
 
@@ -338,88 +324,6 @@ class PaymentsController extends A_Controller
         $this->model->setAmount((float) $amount);
 
         return parent::updateAction($request, $response, $args);
-    }
-
-    /**
-     * @OA\Get(
-     *     path="/v1/paymnets/deactivate/{id}",
-     *     description="Deactivates a single paymnet based on payment ID",
-     *     @OA\Parameter(
-     *          description="ID of a payment to update",
-     *          in="path",
-     *          name="id",
-     *          required=true,
-     *          @OA\Schema(
-     *              format="int64",
-     *              type="integer"
-     *          )
-     *      ),
-     * @OA\Response(
-     *           response=200,
-     *           description="paymnet has been deactivated successfully",
-     *       ),
-     * @OA\Response(
-     *           response=400,
-     *           description="bad request",
-     *       ),
-     *     @OA\Response(
-     *                response=404,
-     *            description="Payment not found",
-     *        ),
-     *     @OA\Response(
-     *            response=500,
-     *            description="Internal server error",
-     *        ),
-     *  )
-     * @param \Slim\Psr7\Request $request
-     * @param \Slim\Psr7\Response $response
-     * @param array $args
-     * @return ResponseInterface
-     */
-    public function deactivateAction(Request $request, Response $response, array $args): ResponseInterface
-    {
-        return parent::deactivateAction($request, $response, $args);
-    }
-
-    /**
-     * @OA\Get(
-     *     path="/v1/payment/reactivate/{id}",
-     *     description="Reactivates a single paymnet based on payment ID",
-     *     @OA\Parameter(
-     *          description="ID of a payment to update",
-     *          in="path",
-     *          name="id",
-     *          required=true,
-     *          @OA\Schema(
-     *              format="int64",
-     *              type="integer"
-     *          )
-     *      ),
-     * @OA\Response(
-     *           response=200,
-     *           description="paymnet has been reactivated successfully",
-     *       ),
-     * @OA\Response(
-     *           response=400,
-     *           description="bad request",
-     *       ),
-     *     @OA\Response(
-     *                response=404,
-     *            description="Payment not found",
-     *        ),
-     *     @OA\Response(
-     *            response=500,
-     *            description="Internal server error",
-     *        ),
-     *  )
-     * @param \Slim\Psr7\Request $request
-     * @param \Slim\Psr7\Response $response
-     * @param array $args
-     * @return ResponseInterface
-     */
-    public function reactivateAction(Request $request, Response $response, array $args): ResponseInterface
-    {
-        return parent::reactivateAction($request, $response, $args);
     }
 
     /**

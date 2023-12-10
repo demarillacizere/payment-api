@@ -8,7 +8,6 @@
 namespace PaymentApi\Model;
 
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity, ORM\Table(name: 'customers')]
@@ -30,7 +29,6 @@ class Customers extends A_Model
     public function __construct()
     {
         $this->payments = new ArrayCollection();
-        $this->basket = new ArrayCollection();
     }
 
     public function getId(): int

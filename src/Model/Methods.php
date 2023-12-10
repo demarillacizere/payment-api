@@ -22,9 +22,6 @@ class Methods extends A_Model
 
     #[ORM\Column(name: 'is_active', type: 'boolean', nullable: false)]
     private bool $isActive;
-
-    #[ORM\OneToMany(mappedBy: "method", targetEntity: Payments::class)]
-
     public function getId(): int
     {
         return $this->id;

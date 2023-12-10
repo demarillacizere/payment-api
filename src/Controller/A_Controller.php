@@ -40,27 +40,46 @@ abstract class A_Controller
     protected function indexAction(Request $request, Response $response): ResponseInterface
     {
         $records = $this->repository->findAll();
-
+        $responseData = [
+            'type' => '',
+            'title' => 'List of ' . $this->routeValue,
+            'instance' => '/v1/' . $this->routeValue,
+        ];
+    
         if (count($records) > 0) {
-            return new JsonResponse([
-                'type' => '',
-                'title' => 'List of ' . $this->routeValue,
-                'status' => 200,
-                'detail' => count($records),
-                'instance' => '/v1/' . $this->routeValue
-            ], 200);
+            $responseData['status'] = 200;
+            $responseData['detail'] = count($records);
+    
+            // Converting private properties to array using reflection
+            $data = array_map(function ($record) {
+                $reflection = new \ReflectionClass($record);
+                $properties = $reflection->getProperties(\ReflectionProperty::IS_PRIVATE);
+    
+                $recordData = [];
+                foreach ($properties as $property) {
+                    $property->setAccessible(true);
+                    $recordData[$property->getName()] = $property->getValue($record);
+                }
+    
+                return $recordData;
+            }, $records);
+    
+            $responseData['data'] = $data;
+            $this->logger->info('Records found:', $responseData);
+            return new JsonResponse($responseData, 200);
         } else {
             $context = [
                 'type' => '/errors/no_' . $this->routeValue . '_found',
-                'title' => 'List of ' . $this->routeValue,
                 'status' => 404,
-                'detail' => count($records),
-                'instance' => '/v1/' . $this->routeValue
+                'detail' => 'No records found',
             ];
             $this->logger->info('No ' . $this->routeValue . ' found', $context);
             return new JsonResponse($context, 404);
         }
     }
+    
+    
+    
 
     /**
      * @param Request $request

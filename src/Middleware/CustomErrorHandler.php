@@ -3,7 +3,6 @@
 /**
  * CustomErrorHandler.php
  * demarillac.izere
- * 26.09.2023
  */
 
 namespace PaymentApi\Middleware;
