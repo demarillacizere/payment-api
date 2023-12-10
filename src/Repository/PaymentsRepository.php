@@ -1,7 +1,7 @@
 <?php
 /**
  * PaymentsRepository.php
- * hennadii.shvedko
+ * demarillac.izere
  * 04.10.2023
  */
 

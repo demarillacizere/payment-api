@@ -1,8 +1,8 @@
 <?php
 /**
  * A_Repository.php
- * hennadii.shvedko
- * 03.10.2023
+ * demarillac.izere
+ * 20.11.2023
  */
 
 namespace PaymentApi\Repository;
@@ -14,7 +14,9 @@ use PaymentApi\Model\A_Model;
 
 abstract class A_Repository
 {
-    public function __construct(protected EntityManager $em){}
+    public function __construct(protected EntityManager $em)
+    {
+    }
 
 
     /**

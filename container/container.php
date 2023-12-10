@@ -1,7 +1,7 @@
 <?php
 /**
  * container.php
- * hennadii.shvedko
+ * demarillac.izere
  * 18.09.2023
  */
 
@@ -15,8 +15,8 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Logger;
 use PaymentApi\Controller\MethodsController;
-use PaymentApi\Repository\BasketRepository;
-use PaymentApi\Repository\BasketRepositoryDoctrine;
+use PaymentApi\Repository\OrderRepository;
+use PaymentApi\Repository\OrderRepositoryDoctrine;
 use PaymentApi\Repository\CustomersRepository;
 use PaymentApi\Repository\CustomersRepositoryDoctrine;
 use PaymentApi\Repository\MethodsRepository;
@@ -106,12 +106,12 @@ $container->set(PaymentsRepository::class, function (Container $container) {
     return new PaymentsRepositoryDoctrine($em);
 });
 
-$container->set(BasketRepository::class, function (Container $container) {
+$container->set(OrderRepository::class, function (Container $container) {
     $em = $container->get(EntityManager::class);
-    return new BasketRepositoryDoctrine($em);
+    return new OrderRepositoryDoctrine($em);
 });
 
-$container->set(Logger::class, function (Container $container){
+$container->set(Logger::class, function (Container $container) {
     $logger = new Logger('paymentAPI');
     $logger->pushHandler((new StreamHandler(__DIR__ . '/../logs/alert.log', Level::Alert)));
     $logger->pushHandler((new StreamHandler(__DIR__ . '/../logs/critical.log', Level::Critical)));

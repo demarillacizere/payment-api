@@ -1,8 +1,8 @@
 <?php
 /**
  * Routes.php
- * hennadii.shvedko
- * 03.10.2023
+ * demarillac.izere
+ * 20.11.2023
  */
 
 namespace PaymentApi;
@@ -12,7 +12,7 @@ enum Routes: string
     case Methods = 'methods';
     case Customers = 'customers';
     case Payments = 'payments';
-    case Basket = 'basket';
+    case Order = 'orders';
 
     public function toSingular(): string
     {
@@ -20,7 +20,7 @@ enum Routes: string
             Routes::Methods => 'method',
             Routes::Customers => 'customer',
             Routes::Payments => 'payment',
-            Routes::Basket => 'basket',
+            Routes::Order => 'order',
         };
     }
 }

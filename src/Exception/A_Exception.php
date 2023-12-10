@@ -1,7 +1,7 @@
 <?php
 /**
  * DBException.php
- * hennadii.shvedko
+ * demarillac.izere
  * 28.09.2023
  */
 

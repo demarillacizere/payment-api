@@ -12,9 +12,24 @@ $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . "/../");
 $dotenv->safeLoad();
 //APP_ROOT
 $app = AppFactory::createFromContainer(container: $container);
+$jwt = new Tuupola\Middleware\JwtAuthentication([
+    "secret" => $_ENV['JWT_SECRET']
+]);
 
 $app->get('/v1', function (Request $request, Response $response, $args) {
-    echo "Hello World!";
+    echo "Welcome to the payment app";
+});
+
+$app->get('/v1/api-docs', function (Request $request, Response $response) {
+    include __DIR__ . '/swagger-ui/dist/index.html';
+    return $response;
+});
+
+$app->get('/v1/token-generator', function (Request $request, Response $response) {
+    exec('php ' . __DIR__ . '/../config/jwt-token.php', $output);
+    $response = $response->withHeader('Content-Type', 'application/json');
+    $response->getBody()->write(implode("\n", $output));
+    return $response;
 });
 
 //Methods
@@ -43,20 +58,11 @@ $app->group('/v1/payments', function (RouteCollectorProxy $group) {
     $group->post('', '\PaymentApi\Controller\PaymentsController:createAction');
     $group->delete('/{id:[0-9]+}', '\PaymentApi\Controller\PaymentsController:removeAction');
     $group->put('/{id:[0-9]+}', '\PaymentApi\Controller\PaymentsController:updateAction');
-});
-
-//Basket
-$app->group('/v1/basket', function (RouteCollectorProxy $group) {
-    $group->get('', '\PaymentApi\Controller\BasketController:indexAction');
-    $group->get('/{id:[0-9]+}', '\PaymentApi\Controller\BasketController:getAction');
-    $group->post('', '\PaymentApi\Controller\BasketController:createAction');
-    $group->delete('/{id:[0-9]+}', '\PaymentApi\Controller\BasketController:removeAction');
-    $group->put('/{id:[0-9]+}', '\PaymentApi\Controller\BasketController:updateAction');
-});
+})->add($jwt);
 
 
 $displayErrors = $_ENV['APP_ENV'] != 'production';
-//$displayErrors = false;
+$displayErrors = true;
 $customErrorHandler = new CustomErrorHandler($app);
 
 $errorMiddleware = $app->addErrorMiddleware($displayErrors, true, true);

@@ -1,31 +1,90 @@
 <?php
-/**
- * PaymentsRepositoryDoctrine.php
- * hennadii.shvedko
- * 04.10.2023
- */
 
 namespace PaymentApi\Repository;
 
-use Doctrine\ORM\Exception\NotSupported;
+use Doctrine\ORM\EntityManager;
 use PaymentApi\Model\Payments;
 
-class PaymentsRepositoryDoctrine extends A_Repository implements PaymentsRepository
+/**
+ * PaymentsRepositoryDoctrine
+ */
+class PaymentsRepositoryDoctrine implements PaymentsRepository
 {
-
+    private EntityManager $entityManager;
+    
     /**
-     * @throws NotSupported
+     * Method __construct
+     *
+     * @param EntityManager $entityManager [explicite description]
+     *
+     * @return void
+     */
+    public function __construct(EntityManager $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }
+    
+        
+    /**
+     * payment store
+     *
+     * @param Payments $payment [explicite description]
+     *
+     * @return void
+     */
+    public function store(Payments $payment): void
+    {
+        $this->entityManager->persist($payment);
+        $this->entityManager->flush();
+    }
+    
+    /**
+     * payment update
+     *
+     * @param Payments $payment [explicite description]
+     *
+     * @return void
+     */
+    public function update(Payments $payment): void
+    {
+        $this->entityManager->persist($payment);
+        $this->entityManager->flush();
+    }
+    
+    /**
+     * payment remove
+     *
+     * @param Payments $payment [explicite description]
+     *
+     * @return void
+     */
+    public function remove(Payments $payment): void
+    {
+        $this->entityManager->remove($payment);
+        $this->entityManager->flush();
+    }
+    
+    /**
+     * payment findAll
+     *
+     * @return array
      */
     public function findAll(): array
     {
-        return $this->em->getRepository(Payments::class)->findAll();
-    }
-
+        return $this->entityManager
+            ->getRepository(Payments::class)
+            ->findAll();    }
+    
     /**
-     * @throws NotSupported
+     * payment findById
+     *
+     * @param int $paymentId [explicite description]
+     *
+     * @return Payments
      */
-    public function findById(int $paymentId): Payments|null
+    public function findById(int $id): Payments|null
     {
-        return $this->em->getRepository(Payments::class)->find($paymentId);
+        $payment = $this->entityManager->find(Payments::class, $id);
+        return $payment;
     }
 }

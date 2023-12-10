@@ -1,9 +1,4 @@
 <?php
-/**
- * CustomersController.php
- * hennadii.shvedko
- * 03.10.2023
- */
 
 namespace PaymentApi\Controller;
 
@@ -44,7 +39,17 @@ final class CustomersController extends A_Controller
      */
     public function indexAction(Request $request, Response $response): ResponseInterface
     {
-        return parent::indexAction($request, $response);
+        $customers = $this->repository->findAll();
+        $customerDetails = [];
+        foreach ($customers as $customer) {
+            $customerDetails[] = [
+                'id' => $customer->getId(),
+                'name' => $customer->getName(),
+                'address' => $customer->getAddress(),
+                'IsActive' => $customer->isActive(),
+            ];
+        }
+        return new JsonResponse($customerDetails);
     }
 
 

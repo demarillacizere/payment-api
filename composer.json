@@ -1,5 +1,5 @@
 {
-  "name": "hennadii.shvedko/payment-api",
+  "name": "demarillac.izere/payment-api",
   "type": "project",
   "autoload": {
     "psr-4": {
@@ -10,7 +10,7 @@
   "authors": [
     {
       "name": "Hennadii Shvedko",
-      "email": "hennadii.shvedko@jagaad.com"
+      "email": "demarillac.izere@jagaad.com"
     }
   ],
   "require": {
@@ -26,7 +26,8 @@
     "symfony/cache": "^5.4",
     "php-di/slim-bridge": "^3.4",
     "monolog/monolog": "^3.4",
-    "ext-pdo": "*"
+    "ext-pdo": "*",
+    "tuupola/slim-jwt-auth": "^3.8"
   },
   "require-dev": {
     "phpstan/phpstan": "^1.10",

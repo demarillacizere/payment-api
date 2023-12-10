@@ -1,9 +1,5 @@
 <?php
-/**
- * PaymnetsController.php
- * hennadii.shvedko
- * 04.10.2023
- */
+
 
 namespace PaymentApi\Controller;
 
@@ -15,15 +11,22 @@ use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use PaymentApi\Repository\CustomersRepository;
+use PaymentApi\Repository\MethodsRepository;
+use DateTime;
+use Slim\Psr7\Message;
 
 class PaymentsController extends A_Controller
 {
-    public function __construct(ContainerInterface $container)
+    private $paymentsRepository;
+    private $customersRepository;
+    private $methodsRepository;
+    public function __construct(ContainerInterface $container, PaymentsRepository $paymentsRepository, CustomersRepository $customerRepository, MethodsRepository $methodsRepository)
     {
         parent::__construct($container);
-        $this->routeEnum = Routes::Payments;
-        $this->routeValue = Routes::Payments->value;
-        $this->repository = $container->get(PaymentsRepository::class);
+        $this->paymentsRepository = $paymentsRepository;
+        $this->customersRepository = $customerRepository;
+        $this->methodsRepository = $methodsRepository;
     }
 
     /**
@@ -42,10 +45,117 @@ class PaymentsController extends A_Controller
      * )
      * @return \Laminas\Diactoros\Response
      */
-    public function indexAction(Request $request, ResponseInterface $response): ResponseInterface
+    public function indexAction(Request $request, Response $response): ResponseInterface
     {
-        return parent::indexAction($request, $response);
+        $payments = $this->paymentsRepository->findAll();
+
+        if (empty($payments)) {
+            $this->logger->info('No payment transaction found.', ['status_code' => 404]);
+            $data = ['message' => 'No payment transaction found'];
+            $statusCode = 404;
+        } else {
+            $responseData = [];
+            foreach ($payments as $payment) {
+                $responseData[] = [
+                    'id' => $payment->getId(),
+                    'customer_id' => $payment->getCustomer()->getId(),
+                    'method_id' => $payment->getPaymentMethod()->getId(),
+                    'amount' => $payment->getAmount(),
+                    'payment_date' => $payment->getPaymentDate()->format('Y-m-d H:i:s'),
+                ];
+            }
+
+            $this->logger->info('Payments transaction list retrieved.', ['status_code' => 200]);
+            $data = $responseData;
+            $statusCode = 200;
+        }
+
+        $response->getBody()->write(json_encode($data));
+
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus($statusCode);
     }
+    public function createAction(Request $request, Response $response): ResponseInterface
+    {
+        $parsedBody = $request->getParsedBody();
+        $contentType = $request->getHeaderLine('Content-Type');
+
+        if (empty($parsedBody)) {
+            $jsonBody = json_decode($request->getBody()->getContents(), true);
+            if (!empty($jsonBody)) {
+                $data = $jsonBody;
+            } else {
+                $context = [
+                    'type' => '/errors/invalid_data_upon_create',
+                    'title' => 'Create Payment',
+                    'status' => 400,
+                    'detail' => 'Invalid Variables',
+                    'instance' => '/v1/payments'
+                ];
+                $this->logger->info('Invalid Data', $context);
+                return new JsonResponse($context, 400);
+            }
+        } else {
+            $data = $parsedBody;
+        }
+
+        if (!$data || empty($data['customer_id']) || empty($data['method_id']) || empty($data['amount']) || empty($data['payment_date'])) {
+            
+                $context = [
+                    'type' => '/errors/invalid_data_upon_create',
+                    'title' => 'Create Payment',
+                    'status' => 400,
+                    'detail' => 'Invalid Credentials',
+                    'instance' => '/v1/payments'
+                ];
+                $this->logger->info('Invalid Data', $context);
+                return new JsonResponse($context, 400);
+            // $this->logger->info('Invalid Data.', ['statusCode' => 400]);
+            // $response->getBody()->write(json_encode(['message' => 'Invalid data']));
+            // return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        $customer = $this->customersRepository->findById($data['customer_id']);
+        $method = $this->methodsRepository->findById($data['method_id']);
+
+        if (!$customer) {
+            $this->logger->info('Invalid Customer ID.', ['statusCode' => 400]);
+            $response->getBody()->write(json_encode(['message' => 'Invalid customer ID']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        } else if (!$method) {
+            $this->logger->info('Invalid payment method ID.', ['statusCode' => 400]);
+            $response->getBody()->write(json_encode(['message' => 'Invalid payment method ID']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+
+        $payment = new Payments();
+        $payment->setCustomer($customer);
+        $payment->setPaymentMethod($method);
+        $payment->setAmount($data['amount']);
+        $payment->setPaymentDate(new \DateTime($data['payment_date']));
+
+        try {
+            $this->paymentsRepository->store($payment);
+
+            $this->logger->info('Payment transaction created.', ['payment_id' => $payment->getId()]);
+
+            $response->getBody()->write(json_encode(['message' => 'Payment transaction created successfully']));
+            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+                $context = [
+                    'type' => '/errors/no_customers_found_upon_update',
+                    'title' => 'List of customers',
+                    'status' => 404,
+                    'detail' => $e,
+                    'instance' => '/v1/customers/{id}'
+                ];
+                $this->logger->info('No customers found', $context);
+                return new JsonResponse($context, 500);
+            
+        }
+    }
+
 
     /**
      * @OA\Post(
@@ -74,8 +184,8 @@ class PaymentsController extends A_Controller
      *              @OA\Schema(
      *                  type="object",
      *                  @OA\Property(
-     *                      property="basket_id",
-     *                      description="ID of basket",
+     *                      property="order_id",
+     *                      description="ID of order",
      *                      type="integer",
      *                  ),
      *              ),
@@ -115,25 +225,6 @@ class PaymentsController extends A_Controller
      * @param \Slim\Psr7\Response $response
      * @return ResponseInterface
      */
-    public function createAction(Request $request, Response $response): ResponseInterface
-    {
-        $requestBody = json_decode($request->getBody()->getContents(), true);
-        $methodId = filter_var($requestBody['method_id'], FILTER_SANITIZE_NUMBER_INT);
-        $customerId = filter_var($requestBody['customer_id'], FILTER_SANITIZE_NUMBER_INT);
-        $basketId = filter_var($requestBody['basket_id'], FILTER_SANITIZE_NUMBER_INT);
-        $isFinalized = filter_var($requestBody['is_finalized'], FILTER_SANITIZE_NUMBER_INT);
-        $sum = filter_var($requestBody['sum'], FILTER_SANITIZE_NUMBER_FLOAT);
-
-        //@TODO: check the relations OneToMany in Doctrine
-        $this->model = new Payments();
-        $this->model->setMethodId((int)$methodId);
-        $this->model->setCustomerId((int)$customerId);
-        $this->model->setBasketId((int)$basketId);
-        $this->model->setIsFinalized((bool)$isFinalized);
-        $this->model->setSum((float)$sum);
-
-        return parent::createAction($request, $response);
-    }
 
 
     /**
@@ -150,7 +241,7 @@ class PaymentsController extends A_Controller
      *              type="integer"
      *          )
      *      ),
-    @OA\RequestBody(
+    
      *           description="Input data format",
      *           @OA\MediaType(
      *               mediaType="multipart/form-data",
@@ -173,15 +264,15 @@ class PaymentsController extends A_Controller
      *               @OA\Schema(
      *                   type="object",
      *                   @OA\Property(
-     *                       property="basket_id",
-     *                       description="ID of basket",
+     *                       property="order_id",
+     *                       description="ID of order",
      *                       type="integer",
      *                   ),
      *               ),
      *               @OA\Schema(
      *                   type="object",
      *                   @OA\Property(
-     *                       property="sum",
+     *                       property="",
      *                       description="Paymnet amount",
      *                       type="float",
      *                   ),
@@ -223,9 +314,7 @@ class PaymentsController extends A_Controller
         $requestBody = json_decode($request->getBody()->getContents(), true);
         $methodId = filter_var($requestBody['method_id'], FILTER_SANITIZE_NUMBER_INT);
         $customerId = filter_var($requestBody['customer_id'], FILTER_SANITIZE_NUMBER_INT);
-        $basketId = filter_var($requestBody['basket_id'], FILTER_SANITIZE_NUMBER_INT);
-        $isFinalized = filter_var($requestBody['is_finalized'], FILTER_SANITIZE_NUMBER_INT);
-        $sum = filter_var($requestBody['sum'], FILTER_SANITIZE_NUMBER_FLOAT);
+        $amount = filter_var($requestBody['amount'], FILTER_SANITIZE_NUMBER_FLOAT);
 
         $payment = $this->repository->findById($args['id']);
         if (is_null($payment)) {
@@ -244,11 +333,9 @@ class PaymentsController extends A_Controller
         //@TODO: check the relations OneToMany in Doctrine
         $this->model = $payment;
 
-        $this->model->setMethodId((int)$methodId);
-        $this->model->setCustomerId((int)$customerId);
-        $this->model->setBasketId((int)$basketId);
-        $this->model->setIsFinalized((bool)$isFinalized);
-        $this->model->setSum((float)$sum);
+        $this->model->setMethodId((int) $methodId);
+        $this->model->setCustomerId((int) $customerId);
+        $this->model->setAmount((float) $amount);
 
         return parent::updateAction($request, $response, $args);
     }

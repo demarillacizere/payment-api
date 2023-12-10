@@ -1,8 +1,8 @@
 <?php
 /**
  * A_Controller.php
- * hennadii.shvedko
- * 03.10.2023
+ * demarillac.izere
+ * 20.11.2023
  */
 
 namespace PaymentApi\Controller;
@@ -159,13 +159,13 @@ abstract class A_Controller
         $records = $this->repository->findById($args['id']);
         if (is_null($records)) {
             $context = [
-                'type' => '/errors/no_'.$this->routeValue.'_found_upon_removing',
+                'type' => '/errors/no_' . $this->routeValue . '_found_upon_removing',
                 'title' => 'Removing ' . $this->routeEnum->toSingular(),
                 'status' => 404,
                 'detail' => $args['id'],
-                'instance' => '/v1/'.$this->routeValue.'/{id}'
+                'instance' => '/v1/' . $this->routeValue . '/{id}'
             ];
-            $this->logger->info('No '.$this->routeValue.' found', $context);
+            $this->logger->info('No ' . $this->routeValue . ' found', $context);
             return new JsonResponse($context, 404);
         }
 
@@ -178,7 +178,7 @@ abstract class A_Controller
                 'title' => 'Internal server error',
                 'status' => 500,
                 'detail' => '',
-                'instance' => '/v1/'.$this->routeValue.'/{id}'
+                'instance' => '/v1/' . $this->routeValue . '/{id}'
             ], 500);
         }
 
@@ -187,7 +187,7 @@ abstract class A_Controller
             'title' => $this->routeEnum->toSingular() . ' has been removed',
             'status' => 200,
             'detail' => '',
-            'instance' => '/v1/'.$this->routeValue.'/{id}'
+            'instance' => '/v1/' . $this->routeValue . '/{id}'
         ], 200);
     }
 
@@ -203,7 +203,7 @@ abstract class A_Controller
         } catch (\Exception $exception) {
             $this->logger->critical($exception->getMessage());
             return new JsonResponse([
-                'type' => '/errors/internal_server_error_upon_create_' .$this->routeValue,
+                'type' => '/errors/internal_server_error_upon_create_' . $this->routeValue,
                 'title' => 'Internal server error',
                 'status' => 500,
                 'detail' => $this->model,
@@ -237,7 +237,7 @@ abstract class A_Controller
                 'title' => 'Internal server error',
                 'status' => 500,
                 'detail' => '',
-                'instance' => '/v1/'.$this->routeValue.'/{id}'
+                'instance' => '/v1/' . $this->routeValue . '/{id}'
             ], 500);
         }
 
@@ -246,7 +246,7 @@ abstract class A_Controller
             'title' => $this->routeEnum->toSingular() . ' has been updated',
             'status' => 200,
             'detail' => '',
-            'instance' => '/v1/'.$this->routeValue.'/{id}'
+            'instance' => '/v1/' . $this->routeValue . '/{id}'
         ], 200);
     }
 }

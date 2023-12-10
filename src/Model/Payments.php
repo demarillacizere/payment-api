@@ -1,142 +1,120 @@
 <?php
-/**
- * Paymnets.php
- * hennadii.shvedko
- * 04.10.2023
- */
 
 namespace PaymentApi\Model;
 
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity, ORM\Table(name: 'payments')]
-class Payments extends A_Model
+class Payments
 {
     #[ORM\Id, ORM\Column(type: 'integer'), ORM\GeneratedValue(strategy: 'AUTO')]
     private int $id;
 
-    #[ORM\Column(name: 'method_id', type: 'integer', nullable: false)]
-    private int $methodId;
+    #[ORM\ManyToOne(targetEntity: 'customers')]
+    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
+    private $customer;
 
-    #[ORM\Column(name: 'customer_id', type: 'integer', nullable: false)]
-    private int $customerId;
+    #[ORM\ManyToOne(targetEntity: 'methods')]
+    #[ORM\JoinColumn(name: 'method_id', referencedColumnName: 'id')]
+    private $paymentMethod;
 
-    #[ORM\Column(name: 'basket_id', type: 'integer', nullable: false)]
-    private int $basketId;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    private float $amount;
 
-    #[ORM\Column(name: 'sum', type: 'float', nullable: false)]
-    private float $sum;
+    #[ORM\Column(name: 'payment_date', type: 'datetime', nullable: false)]
+    private \DateTime $paymentDate;
 
-    #[ORM\Column(name: 'is_finalized', type: 'boolean', nullable: false)]
-    private bool $isFinalized;
-
-    #[ORM\Column(name: 'transaction_date', type: 'date', nullable: false)]
-    private string $transactionDate;
-
-    #[ORM\ManyToOne(targetEntity: Customers::class, inversedBy: "payments")]
-    #[ORM\JoinColumn(name: "customer_id", referencedColumnName: "id")]
-    private Customers $customer;
-
-    #[ORM\ManyToOne(targetEntity: Methods::class, inversedBy: "payments")]
-    #[ORM\JoinColumn(name: "method_id", referencedColumnName: "id")]
-    private Methods $method;
-
-    #[ORM\ManyToOne(targetEntity: Basket::class, inversedBy: "payments")]
-    #[ORM\JoinColumn(name: "basket_id", referencedColumnName: "id")]
-    private Basket $basket;
-
-    public function getId(): int
+    /**
+     * Get the value of id
+     */
+    public function getId()
     {
         return $this->id;
     }
 
-    public function getMethodId(): int
+    /**
+     * Set the value of id
+     *
+     * @return  self
+     */
+    public function setId($id)
     {
-        return $this->methodId;
+        $this->id = $id;
+
+        return $this;
     }
 
-    public function setMethodId(int $methodId): void
-    {
-        $this->methodId = $methodId;
-    }
-
-    public function getCustomerId(): int
-    {
-        return $this->customerId;
-    }
-
-    public function setCustomerId(int $customerId): void
-    {
-        $this->customerId = $customerId;
-    }
-
-    public function getBasketId(): int
-    {
-        return $this->basketId;
-    }
-
-    public function setBasketId(int $basketId): void
-    {
-        $this->basketId = $basketId;
-    }
-
-    public function getSum(): float
-    {
-        return $this->sum;
-    }
-
-    public function setSum(float $sum): void
-    {
-        $this->sum = $sum;
-    }
-
-    public function isFinalized(): bool
-    {
-        return $this->isFinalized;
-    }
-
-    public function setIsFinalized(bool $isFinalized): void
-    {
-        $this->isFinalized = $isFinalized;
-    }
-
-    public function getTransactionDate(): string
-    {
-        return $this->transactionDate;
-    }
-
-    public function setTransactionDate(string $transactionDate): void
-    {
-        $this->transactionDate = $transactionDate;
-    }
-
-    public function getMethod(): Methods
-    {
-        return $this->method;
-    }
-
-    public function setMethod(Methods $method): void
-    {
-        $this->method = $method;
-    }
-
-    public function getCustomer(): Customers
+    /**
+     * Get the associated customer
+     */
+    public function getCustomer()
     {
         return $this->customer;
     }
 
-    public function setCustomer(Customers $customer): void
+    /**
+     * Set the associated customer
+     */
+    public function setCustomer($customer)
     {
         $this->customer = $customer;
+        return $this;
     }
 
-    public function getBasket(): Basket
+    /**
+     * Get the associated payment method
+     */
+    public function getPaymentMethod()
     {
-        return $this->basket;
+        return $this->paymentMethod;
     }
 
-    public function setBasket(Basket $basket): void
+    /**
+     * Set the associated payment method
+     */
+    public function setPaymentMethod($paymentMethod)
     {
-        $this->basket = $basket;
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
+    /**
+     * Get the value of amount
+     */ 
+    public function getAmount()
+    {
+        return $this->amount;
+    }
+
+    /**
+     * Set the value of amount
+     *
+     * @return  self
+     */ 
+    public function setAmount($amount)
+    {
+        $this->amount = $amount;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of paymentDate
+     */ 
+    public function getPaymentDate()
+    {
+        return $this->paymentDate;
+    }
+
+    /**
+     * Set the value of paymentDate
+     *
+     * @return  self
+     */ 
+    public function setPaymentDate($paymentDate)
+    {
+        $this->paymentDate = $paymentDate;
+
+        return $this;
     }
 }

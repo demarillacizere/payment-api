@@ -1,7 +1,7 @@
 <?php
 /**
  * MethodsController.php
- * hennadii.shvedko
+ * demarillac.izere
  * 26.09.2023
  */
 
@@ -44,7 +44,18 @@ final class MethodsController extends A_Controller
      */
     public function indexAction(Request $request, ResponseInterface $response): ResponseInterface
     {
-        return parent::indexAction($request, $response);
+        $methods = $this->repository->findAll();
+        $methodsDetails = [];
+        foreach ($methods as $method) {
+            $methodDetails[] = [
+                'id' => $method->getId(),
+                'name' => $method->getName(),
+                'IsActive' => $method->isActive(), 
+            ];
+        }
+
+        // Return the array of customer details as JSON response
+        return new JsonResponse($methodDetails);
     }
 
     /**

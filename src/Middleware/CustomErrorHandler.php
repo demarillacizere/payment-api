@@ -2,7 +2,7 @@
 
 /**
  * CustomErrorHandler.php
- * hennadii.shvedko
+ * demarillac.izere
  * 26.09.2023
  */
 
@@ -28,21 +28,22 @@ final class CustomErrorHandler
     }
 
     public function __invoke(
-        Request          $request,
-        Throwable        $exception,
-        bool             $displayErrorDetails,
-        bool             $logErrors,
-        bool             $logErrorDetails,
+        Request $request,
+        Throwable $exception,
+        bool $displayErrorDetails,
+        bool $logErrors,
+        bool $logErrorDetails,
         ?LoggerInterface $logger = null
-    )
-    {
+    ) {
         $statusCode = 500;
-        if ($exception instanceof ORMException
+        if (
+            $exception instanceof ORMException
             || $exception instanceof HttpNotFoundException
-            || $exception instanceof \PDOException) {
+            || $exception instanceof \PDOException
+        ) {
             $this->logger->critical($exception->getMessage());
             $statusCode = 500;
-        } else if($exception instanceof A_Exception) {
+        } else if ($exception instanceof A_Exception) {
             $this->logger->alert($exception->getMessage());
             $statusCode = $exception->getCode();
         }

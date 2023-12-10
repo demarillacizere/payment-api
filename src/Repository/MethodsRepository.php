@@ -1,7 +1,7 @@
 <?php
 /**
  * MethodsRepository.php
- * hennadii.shvedko
+ * demarillac.izere
  * 26.09.2023
  */
 
