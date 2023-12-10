@@ -1,5 +1,5 @@
 <?php
-namespace PaymentApiTests;
+namespace App;
 
 use DI\Container;
 use Doctrine\ORM\EntityManager;
@@ -10,28 +10,24 @@ use PaymentApi\Repository\CustomersRepository;
 use PaymentApi\Repository\CustomersRepositoryDoctrine;
 use PHPUnit\Framework\TestCase;
 
-/**
- * AControllerTests.php
- * demarillac.izere
- * 04.10.2023
- */
-class AControllerTest extends TestCase
+
+class CustomerControllerTest extends TestCase
 {
     private Container $container;
 
     protected function setUp(): void
     {
         $container = new Container();
-        $container->set(EntityManager::class, function (Container $c) {
+        $container->set(EntityManager::class, function(Container $c) {
             return Mockery::mock('Doctrine\ORM\EntityManager');
         });
 
-        $container->set(CustomersRepository::class, function (Container $c) {
+        $container->set(CustomersRepository::class, function(Container $c) {
             $em = $c->get(EntityManager::class);
             return new CustomersRepositoryDoctrine($em);
         });
 
-        $container->set(Logger::class, function (Container $c) {
+        $container->set(Logger::class, function(Container $c) {
             return Mockery::mock('Monolog\Logger');
         });
 

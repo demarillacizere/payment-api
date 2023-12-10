@@ -39,17 +39,6 @@ final class CustomersController extends A_Controller
      */
     public function indexAction(Request $request, Response $response): ResponseInterface
     {
-        // $customers = $this->repository->findAll();
-        // $customerDetails = [];
-        // foreach ($customers as $customer) {
-        //     $customerDetails[] = [
-        //         'id' => $customer->getId(),
-        //         'name' => $customer->getName(),
-        //         'address' => $customer->getAddress(),
-        //         'IsActive' => $customer->isActive(),
-        //     ];
-        // }
-        // return new JsonResponse($customerDetails);
         return parent::indexAction($request, $response);
     }
 
