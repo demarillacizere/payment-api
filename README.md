@@ -1,11 +1,8 @@
 <h1 align="center">Payment API</h1>
 
 <p align="center">
-This is a simple payment API created for the Jagaad PHP Course <b>classroom-php-2304-002</b>. This application aims to cover some module 5 topics, mainly those related to the last chapter about CI/CD and deploying PHP applications.
+This is a payment API to manage transactions. It is created using PHP.
 </p>
-
-[![Continuous Integration Module5](https://github.com/h-shvedko/paymentAPI/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/h-shvedko/paymentAPI/actions/workflows/continuous-integration.yml)
-![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/h-shvedko/paymentAPI/continuous-integration.yml)
 
 ## Installation
 
@@ -14,7 +11,7 @@ This app can run using the typical XAMPP configuration; ensure you have the corr
 ### Here's how we run it using XAMPP:
 
 1. Ensure you have XAMPP and Composer installed.
-2. Create the database `project_manager`.
+2. Create the database
 3. Install the PHP dependencies.
    ````
    composer install
@@ -41,23 +38,45 @@ This app can run using the typical XAMPP configuration; ensure you have the corr
    ````
 4. Go to http://localhost:8000
 
-## Quality Tools
+## API Endpoints
 
-Note: If you are using only the Docker containers, remember to include the prefix `docker exec -it php-course.php-fpm ` to all the PHP commands, similar to one above.
+The API supports the following endpoints:
 
-- Run the unit tests with PHPUnit
-  ```
-  php vendor/bin/phpunit test/ --colors
-  ```
-- Run the static analysis with PHPStan
-  ```
-  php vendor/bin/phpstan
-  ```
-- Check the code style with PHPCodeSniffer
-  ```
-  php vendor/bin/phpcs vendor/bin/phpcs src/ --standard=psr12
-  ```
-- Fix the code style with PHPCodeSniffer
-  ```
-  php vendor/bin/phpcbf vendor/bin/phpcs src/ --standard=psr12
-  ```
+- Methods Endpoints:
+    - `GET /v1/methods:` Retrieve a list of payment methods.
+    - `POST /v1/methods:` Create a new payment method.
+    - `PUT /v1/methods/{id:[0-9]+}:` Update a payment method by ID.
+    - `DELETE /v1/methods/{id:[0-9]+}:` Delete a payment method by ID.
+    - `GET /v1/methods/deactivate/{id:[0-9]+}:` Deactivate a payment method by ID.
+    - `GET /v1/methods/methods/{id:[0-9]+}:` Reactivate a payment method by ID.
+
+- Customers Endpoints:
+    - `GET /v1/customers:` Retrieve a list of customers.
+    - `POST /v1/customers:` Create a new custormers.
+    - `PUT /v1/customers/{id:[0-9]+}:` Update a customers by ID.
+    - `DELETE /v1/customers/{id:[0-9]+}:` Delete a customers by ID.
+    - `GET /v1/customers/deactivate/{id:[0-9]+}:` Deactivate a customer by ID.
+    - `GET /v1/customers/reactivate/{id:[0-9]+}:` Reactivate a customer by ID.
+
+- Payments Endpoints:
+    - `GET /v1/payments:` Retrieve a list of payment transactions.
+    - `POST /v1/payments:` Create a new payment transaction.
+    - `PUT /v1/payments/{id:[0-9]+}:` Update a payment transaction by ID.
+    - `DELETE /v1/payments/{id:[0-9]+}:` Delete a payment transaction by ID.
+
+## JWT Authentication
+
+To access the protected payment routes, follow these steps to authenticate via JWT:
+
+1. Generate A random secret key using ```php generateSecret.php```
+2. Add the secret key to the .env file as a JWT_SECRET value
+3. Obtain a JWT token by making a GET request to the route: http://localhost:8000/v1/token-generator.
+4. Include the obtained JWT token as a Bearer token in the header of your requests for authorization.
+
+## Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the [Apache](license) License.
