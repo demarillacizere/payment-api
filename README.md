@@ -1,9 +1,9 @@
 <h1 align="center">Payment API</h1>
-
 <p align="center">
 This is a payment API to manage transactions. It is created using PHP.
 </p>
 
+[![CI/CD Workflow](https://github.com/demarillacizere/payment-api/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/demarillacizere/payment-api/actions/workflows/continuous-integration.yml)
 ## Installation
 
 This app can run using the typical XAMPP configuration; ensure you have the correct PHP version. Or you can also use Docker Compose to start all the required services.
@@ -79,4 +79,4 @@ Contributions are welcome! Feel free to open an issue or submit a pull request.
 
 ## License
 
-This project is licensed under the [Apache](license) License.
+This project is licensed under the [MIT](license) License.
